@@ -11,6 +11,7 @@ from tgbot.handlers.admin import register_admin
 from tgbot.handlers.echo import register_echo
 from tgbot.handlers.user import register_user
 from tgbot.middlewares.db import DbMiddleware
+from tgbot.misc.sqliteapi import Database
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,9 @@ def register_all_handlers(dp):
 
     register_echo(dp)
 
+def create_tables(db: Database):
+    db.create_table_users()
+
 
 async def main():
     logging.basicConfig(
@@ -42,6 +46,8 @@ async def main():
     bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
     dp = Dispatcher(bot, storage=storage)
 
+    db = Database()
+
     bot['config'] = config
 
     register_all_middlewares(dp)
@@ -54,7 +60,8 @@ async def main():
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
-        await bot.session.close()
+        session = await bot.get_session()
+        await session.close()
 
 
 if __name__ == '__main__':
