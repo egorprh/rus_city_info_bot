@@ -37,7 +37,7 @@ async def get_city_name(message: Message):
         Часовой пояс: {result.get('timezone')}
         Местное время: {local_time}
         Timestamp: {timestamp}
-        Население (На какой год?): {result.get('population')} 
+        Население (на 2021 год): {result.get('population')} 
         Год основания: {result.get('foundation_year')}
         Возраст города: {year - int(result.get('foundation_year'))}
         """)
