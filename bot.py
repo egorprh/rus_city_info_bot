@@ -31,7 +31,8 @@ def register_all_handlers(dp):
     register_echo(dp)
 
 def create_tables(db: Database):
-    db.create_table_users()
+    db.create_table_cities()
+    #db.fill_cities_table()
 
 
 async def main():
@@ -49,10 +50,12 @@ async def main():
     db = Database()
 
     bot['config'] = config
+    bot['db'] = db
 
     register_all_middlewares(dp)
     register_all_filters(dp)
     register_all_handlers(dp)
+    create_tables(db)
 
     # start
     try:

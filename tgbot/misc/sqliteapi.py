@@ -1,6 +1,32 @@
 import csv
 import sqlite3
 
+titles = {
+    0: "address",
+    1: "postal_code",
+    2: "country",
+    3: "federal_district",
+    4: "region_type",
+    5: "region",
+    6: "area_type",
+    7: "area",
+    8: "city_type",
+    9: "city",
+    10: "settlement_type",
+    11: "settlement",
+    12: "kladr_id",
+    13: "fias_id",
+    14: "fias_level",
+    15: "capital_marker",
+    16: "okato",
+    17: "oktmo",
+    18: "tax_office",
+    19: "timezone",
+    20: "geo_lat",
+    21: "geo_lon",
+    22: "population",
+    23: "foundation_year"
+}
 
 class Database:
     def __init__(self, path_to_db='main.db'):
@@ -9,12 +35,6 @@ class Database:
     @property
     def connection(self):
         return sqlite3.connect(self.path_to_db)
-
-    def dict_factory(self, row):
-        d = {}
-        for idx, col in enumerate(self.description):
-            d[col[0]] = row[idx]
-        return d
 
     def execute(self, sql: str, params: tuple = tuple(), fetchone=False, fetchall=False, commit=False):
         connection = self.connection
@@ -61,6 +81,13 @@ class Database:
         sql = f"INSERT INTO {table_name} ({keys}) VALUES ({params_mask})"
         self.execute(sql, params, commit=True)
 
+    def update_record(self, table_name: str, recordid: int, **kwargs):
+        sql = f"UPDATE {table_name} SET "
+        sql, params = self.format_args(sql, kwargs, ", ")
+        sql += " WHERE id = ?"
+        params += (recordid,)
+        self.execute(sql, params, commit=True)
+
     def get_records_sql(self, sql: str, **kwargs):
         params = ()
         if len(kwargs) >= 1:
@@ -83,6 +110,30 @@ class Database:
                 foundation_year INTEGER
             );"""
         self.execute(sql, commit=True)
+
+    def fill_cities_table(self):
+        with open('tgbot/misc/city.csv', newline='') as csvfile:
+            cityreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            i = 1
+            for row in cityreader:
+
+                # Пропускаем первую строку, там заголовки
+                if i == 1:
+                    i += 1
+                    continue
+
+                self.insert_record('cities',
+                                   address=row[0],
+                                   city=row[8] + ' ' + row[9],
+                                   postal_code=row[1],
+                                   region=row[4] + ' ' + row[5],
+                                   district=row[3],
+                                   timezone=row[19],
+                                   geo_lat=row[20],
+                                   geo_lon=row[21],
+                                   population=row[22],
+                                   foundation_year=row[23]
+                                   )
 
     def create_table_users(self):
         sql = """CREATE TABLE IF NOT EXISTS users (
@@ -131,56 +182,3 @@ def logger(statement):
     {statement}
     ------------------------------------------
     ''')
-
-
-titles = {
-    0: "address",
-    1: "postal_code",
-    2: "country",
-    3: "federal_district",
-    4: "region_type",
-    5: "region",
-    6: "area_type",
-    7: "area",
-    8: "city_type",
-    9: "city",
-    10: "settlement_type",
-    11: "settlement",
-    12: "kladr_id",
-    13: "fias_id",
-    14: "fias_level",
-    15: "capital_marker",
-    16: "okato",
-    17: "oktmo",
-    18: "tax_office",
-    19: "timezone",
-    20: "geo_lat",
-    21: "geo_lon",
-    22: "population",
-    23: "foundation_year"
-}
-
-
-def fill_cities_table(db: Database):
-    with open('city.csv', newline='') as csvfile:
-        cityreader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        i = 1
-        for row in cityreader:
-
-            # Пропускаем первую строку, там заголовки
-            if i == 1:
-                i += 1
-                continue
-
-            db.insert_record('cities',
-                             address=row[0],
-                             city=row[8] + ' ' + row[9],
-                             postal_code=row[1],
-                             region=row[4] + ' ' + row[5],
-                             district=row[3],
-                             timezone=row[19],
-                             geo_lat=row[20],
-                             geo_lon=row[21],
-                             population=row[22],
-                             foundation_year=row[23]
-                             )
