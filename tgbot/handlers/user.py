@@ -19,10 +19,10 @@ async def user_start(message: Message):
 
 async def get_city_name(message: Message):
     city_name = message.text
+    city_name = city_name.lower().capitalize()
     db: Database = message.bot.get("db")
 
-    #TODO Защита от инкции
-    results = db.get_records_sql(f"SELECT * FROM cities WHERE address LIKE '%{city_name}'")
+    results = db.get_records_sql("SELECT * FROM cities WHERE address LIKE ?", '%' + city_name)
 
     if len(results) == 0:
         await message.answer('Ничего не найдено. Проверьте город на опечатки.')

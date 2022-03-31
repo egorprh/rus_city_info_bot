@@ -33,7 +33,8 @@ def register_all_handlers(dp):
 def create_tables(db: Database):
     db.create_table_cities()
     db.create_table_users()
-    #db.fill_cities_table()
+    db.delete_records('cities')
+    db.fill_cities_table()
 
 
 async def main():

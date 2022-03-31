@@ -76,9 +76,15 @@ class Database:
         sql, params = self.format_args(sql, kwargs)
         return self.execute(sql, params, fetchone=True)
 
-    def get_records(self, table, **kwargs):
-        sql = f"SELECT * FROM {table} WHERE "
-        sql, params = self.format_args(sql, kwargs)
+    def get_records(self, table, data: dict = {}):
+        sql = f"SELECT * FROM {table}"
+        params = ()
+        if len(data) > 0:
+            sql += " WHERE "
+            sql, params = self.format_args(sql, data)
+        # TODO check
+        print(sql)
+        print(params)
         return self.execute(sql, params, fetchall=True)
 
     def insert_record(self, table_name: str, **kwargs):
@@ -104,7 +110,13 @@ class Database:
         # if len(kwargs) >= 1:
         #     sql += ' WHERE TRUE '
         #     sql, params = self.format_args(sql, kwargs)
+        # TODO check
+        print(sql)
+        print(args)
         return self.execute(sql, args, fetchall=True)
+
+    def delete_records(self, table_name: str):
+        self.execute(f"DELETE FROM {table_name} WHERE TRUE", commit=True)
 
     def create_table_cities(self):
         sql = """CREATE TABLE IF NOT EXISTS cities (
@@ -159,19 +171,6 @@ class Database:
               """
         self.execute(sql, commit=True)
 
-    def add_user(self, id: int, name: str, email: str = None):
-        sql = "INSERT INTO users(id, name, email) VALUES (?, ?, ?)"
-        self.execute(sql, (id, name, email), commit=True)
-
-    def select_all_users(self):
-        sql = "SELECT * FROM users"
-        return self.execute(sql, fetchall=True)
-
-    def select_user(self, **kwargs):
-        sql = "SELECT * FROM users WHERE "
-        sql, params = self.format_args(sql, kwargs)
-        return self.execute(sql, params, fetchone=True)
-
     def count_users(self, **kwargs):
         sql = "SELECT COUNT(id) FROM users WHERE "
         sql, params = self.format_args(sql, kwargs)
@@ -184,9 +183,6 @@ class Database:
         params += (userid,)
         self.execute(sql, params, commit=True)
         return sql, params
-
-    def delete_users(self):
-        self.execute("DELETE FROM users WHERE TRUE", commit=True)
 
 
 def logger(statement):
