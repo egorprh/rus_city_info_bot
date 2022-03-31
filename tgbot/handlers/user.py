@@ -7,20 +7,27 @@ from tgbot.misc.sqliteapi import Database
 
 
 async def user_start(message: Message):
-    await message.reply("Hello, user! Give me city name")
+    user = message.from_user
+
+    db: Database = message.bot.get("db")
+
+    db.insert_record('users', telegram_id=user.id, first_name=user.first_name, username=user.username,
+                     language_code=user.language_code)
+
+    await message.answer("Hello, user! Give me city name")
 
 
 async def get_city_name(message: Message):
     city_name = message.text
     db: Database = message.bot.get("db")
 
+    #TODO Защита от инкции
     results = db.get_records_sql(f"SELECT * FROM cities WHERE address LIKE '%{city_name}'")
 
     if len(results) == 0:
         await message.answer('Ничего не найдено. Проверьте город на опечатки.')
 
     for result in results:
-
         dbtz = result.get('timezone')
         offset = datetime.timedelta(hours=int(dbtz.replace('UTC', '')))
         tz = datetime.timezone(offset, dbtz)
@@ -41,7 +48,8 @@ async def get_city_name(message: Message):
         Год основания: {result.get('foundation_year')}
         Возраст города: {year - int(result.get('foundation_year'))}
         """)
-        await message.bot.send_location(message.chat.id, latitude=result.get('geo_lat'), longitude=result.get('geo_lon'))
+        await message.bot.send_location(message.chat.id, latitude=result.get('geo_lat'),
+                                        longitude=result.get('geo_lon'))
 
 
 def register_user(dp: Dispatcher):
