@@ -71,6 +71,16 @@ class Database:
         )
         return sql, tuple(params.values())
 
+    def get_record(self, table, **kwargs):
+        sql = f"SELECT * FROM {table} WHERE "
+        sql, params = self.format_args(sql, kwargs)
+        return self.execute(sql, params, fetchone=True)
+
+    def get_records(self, table, **kwargs):
+        sql = f"SELECT * FROM {table} WHERE "
+        sql, params = self.format_args(sql, kwargs)
+        return self.execute(sql, params, fetchall=True)
+
     def insert_record(self, table_name: str, **kwargs):
         keys = ', '.join(
             f"{item}" for item in kwargs.keys()
@@ -79,7 +89,7 @@ class Database:
             '?' for item in kwargs.keys()
         )
         params = tuple(kwargs.values())
-        sql = f"INSERT INTO {table_name} ({keys}) VALUES ({params_mask})"
+        sql = f"INSERT OR IGNORE INTO {table_name} ({keys}) VALUES ({params_mask})"
         self.execute(sql, params, commit=True)
 
     def update_record(self, table_name: str, recordid: int, **kwargs):
@@ -89,12 +99,12 @@ class Database:
         params += (recordid,)
         self.execute(sql, params, commit=True)
 
-    def get_records_sql(self, sql: str, **kwargs):
-        params = ()
-        if len(kwargs) >= 1:
-            sql += ' WHERE TRUE '
-            sql, params = self.format_args(sql, kwargs)
-        return self.execute(sql, params, fetchall=True)
+    def get_records_sql(self, sql: str, *args):
+        # params = ()
+        # if len(kwargs) >= 1:
+        #     sql += ' WHERE TRUE '
+        #     sql, params = self.format_args(sql, kwargs)
+        return self.execute(sql, args, fetchall=True)
 
     def create_table_cities(self):
         sql = """CREATE TABLE IF NOT EXISTS cities (
@@ -138,10 +148,13 @@ class Database:
 
     def create_table_users(self):
         sql = """CREATE TABLE IF NOT EXISTS users (
-                id int NOT NULL,
-                name varchar(255) NOT NULL,
-                email varchar(255),
-                PRIMARY KEY(id)
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                telegram_id INTEGER UNIQUE NOT NULL,
+                first_name varchar(255),
+                last_name varchar(255),
+                username varchar(255) UNIQUE,
+                language_code varchar(255),
+                email varchar(255)
                 ); 
               """
         self.execute(sql, commit=True)
