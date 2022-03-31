@@ -28,6 +28,7 @@ titles = {
     23: "foundation_year"
 }
 
+
 class Database:
     def __init__(self, path_to_db='main.db'):
         self.path_to_db = path_to_db
