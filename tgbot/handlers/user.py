@@ -6,6 +6,7 @@ from aiogram.types import Message
 
 from tgbot.misc.sqliteapi import Database
 from tgbot.states.chosecity import choseCityStates
+from tgbot.keyboards.reply import yes_no_button, start_search_button
 
 
 async def user_start(message: Message):
@@ -15,11 +16,11 @@ async def user_start(message: Message):
     db.insert_record('users', telegram_id=user.id, first_name=user.first_name, username=user.username,
                      language_code=user.language_code)
 
-    await message.answer("Чтобы начать поиск нажми кнопку Получить информацию о городе")
+    await message.answer("Чтобы начать поиск нажми кнопку Получить информацию о городе", reply_markup=start_search_button)
 
 
 async def start_search(message: Message):
-    await message.answer("Hello, user! Give me city name")
+    await message.answer("Дай название города")
     await choseCityStates.give_city_name.set()
 
 
@@ -42,7 +43,8 @@ async def get_city_name(message: Message, state: FSMContext):
 
     # Если городов нет, то сообщаем об этом
     if not results:
-        await message.answer('Ничего не найдено. Проверьте город на опечатки. Или введите близжайший крупный город')
+        await message.answer('Ничего не найдено. Проверьте город на опечатки. Или введите близжайший крупный город',
+                             reply_markup=start_search_button)
         await state.reset_state(True)
     else:
         # Берем первый город
@@ -59,7 +61,7 @@ async def get_city_name(message: Message, state: FSMContext):
                 await message.answer("Тогда остался только такой вариант")
             await give_result(message, state)
         else:
-            await message.answer(f"Это ваш город? {city.get('city')} {city.get('region')}")
+            await message.answer(f"Это ваш город? {city.get('city')} {city.get('region')}", reply_markup=yes_no_button)
             await choseCityStates.confirm_city.set()
 
 
@@ -100,7 +102,7 @@ async def give_result(message: Message, state: FSMContext):
             Возраст города: {year - int(result.get('foundation_year'))}
             Широта: {result.get('geo_lat')}
             Долгота: {result.get('geo_lon')}
-            """)
+            """, reply_markup=start_search_button)
     await message.bot.send_location(message.chat.id, latitude=result.get('geo_lat'),
                                     longitude=result.get('geo_lon'))
 
@@ -109,7 +111,8 @@ async def give_result(message: Message, state: FSMContext):
 
 
 async def plug(message: Message):
-    await message.answer('Хочешь начать поиск, нажми кнопку Получить информацию о городе. Вот тебе интересный факт')
+    await message.answer('Хочешь начать поиск, нажми кнопку Получить информацию о городе. Вот тебе интересный факт',
+                         reply_markup=start_search_button)
 
 
 def register_user(dp: Dispatcher):
