@@ -84,7 +84,6 @@ async def give_result(message: Message, state: FSMContext):
     # Получаем таймзону в формате UTC+N
     dbtz = result.get('timezone')
     # Считаем смещение, для этого вычищаем из строки "UTC", т.е. остается +3 или -3
-    # TODO Проверить с отрицательными значениями
     offset = datetime.timedelta(hours=int(dbtz.replace('UTC', '')))
     # Получаем таймзону
     tz = datetime.timezone(offset, dbtz)
