@@ -1,6 +1,6 @@
 import datetime
 
-from aiogram import Dispatcher
+from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
@@ -12,10 +12,13 @@ async def user_start(message: Message):
     user = message.from_user
 
     db: Database = message.bot.get("db")
-
     db.insert_record('users', telegram_id=user.id, first_name=user.first_name, username=user.username,
                      language_code=user.language_code)
 
+    await message.answer("Чтобы начать поиск нажми кнопку Получить информацию о городе")
+
+
+async def start_search(message: Message):
     await message.answer("Hello, user! Give me city name")
     await choseCityStates.give_city_name.set()
 
@@ -33,11 +36,14 @@ async def get_city_name(message: Message, state: FSMContext):
         city_name = user_message.lower()
         db: Database = message.bot.get("db")
         results = db.get_records_sql("SELECT * FROM cities WHERE address LIKE ?", '%' + city_name)
+        if len(results) > 1:
+            await state.update_data(several_result=True)
+            await message.answer(f"Найдено {len(results)} совпадений")
 
     # Если городов нет, то сообщаем об этом
-    if len(results) == 0:
+    if not results:
         await message.answer('Ничего не найдено. Проверьте город на опечатки. Или введите близжайший крупный город')
-        await choseCityStates.give_city_name.set()
+        await state.reset_state(True)
     else:
         # Берем первый город
         city = results.pop(0)
@@ -48,9 +54,12 @@ async def get_city_name(message: Message, state: FSMContext):
 
         # Если в массиве городов ничего не осталось, то сразу выдаем результатов
         if not results:
+            state_data = await state.get_data()
+            if state_data.get('several_result'):
+                await message.answer("Тогда остался только такой вариант")
             await give_result(message, state)
         else:
-            await message.answer(f"Это ваш город? {city.get('city')} {city.get('region')} {city}")
+            await message.answer(f"Это ваш город? {city.get('city')} {city.get('region')}")
             await choseCityStates.confirm_city.set()
 
 
@@ -89,18 +98,23 @@ async def give_result(message: Message, state: FSMContext):
             Население (на 2021 год): {result.get('population')} 
             Год основания: {result.get('foundation_year')}
             Возраст города: {year - int(result.get('foundation_year'))}
-            latitude: {result.get('geo_lat')}
-            longitude: {result.get('geo_lon')}
+            Широта: {result.get('geo_lat')}
+            Долгота: {result.get('geo_lon')}
             """)
     await message.bot.send_location(message.chat.id, latitude=result.get('geo_lat'),
                                     longitude=result.get('geo_lon'))
 
-    # очищаем данные и устанавливаем начальный стейт
-    await state.reset_data()
-    await choseCityStates.give_city_name.set()
+    # очищаем данные и стейт
+    await state.reset_state(True)
+
+
+async def plug(message: Message):
+    await message.answer('Хочешь начать поиск, нажми кнопку Получить информацию о городе. Вот тебе интересный факт')
 
 
 def register_user(dp: Dispatcher):
+    dp.register_message_handler(start_search, text="Получить информацию о городе", state="*")
     dp.register_message_handler(user_start, commands=["start"], state="*")
     dp.register_message_handler(get_city_name, state=choseCityStates.give_city_name)
     dp.register_message_handler(confirm_city, state=choseCityStates.confirm_city)
+    dp.register_message_handler(plug, state="*", content_types=types.ContentTypes.ANY)

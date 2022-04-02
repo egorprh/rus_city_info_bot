@@ -76,15 +76,13 @@ class Database:
         sql, params = self.format_args(sql, kwargs)
         return self.execute(sql, params, fetchone=True)
 
-    def get_records(self, table, data: dict = {}):
+    def get_records(self, table, params=None):
+        if params is None:
+            params = {}
         sql = f"SELECT * FROM {table}"
-        params = ()
-        if len(data) > 0:
+        if params:
             sql += " WHERE "
-            sql, params = self.format_args(sql, data)
-        # TODO check
-        print(sql)
-        print(params)
+            sql, params = self.format_args(sql, params)
         return self.execute(sql, params, fetchall=True)
 
     def insert_record(self, table_name: str, **kwargs):
@@ -106,17 +104,19 @@ class Database:
         self.execute(sql, params, commit=True)
 
     def get_records_sql(self, sql: str, *args):
-        # params = ()
-        # if len(kwargs) >= 1:
-        #     sql += ' WHERE TRUE '
-        #     sql, params = self.format_args(sql, kwargs)
-        # TODO check
-        print(sql)
-        print(args)
         return self.execute(sql, args, fetchall=True)
 
     def delete_records(self, table_name: str):
         self.execute(f"DELETE FROM {table_name} WHERE TRUE", commit=True)
+
+    def count_records(self, table: str, params=None):
+        if params is None:
+            params = {}
+        sql = f"SELECT COUNT(id) AS count FROM {table}"
+        if params:
+            sql += " WHERE "
+            sql, params = self.format_args(sql, params)
+        return self.execute(sql, params, fetchone=True).get('count')
 
     def create_table_cities(self):
         sql = """CREATE TABLE IF NOT EXISTS cities (
@@ -146,6 +146,8 @@ class Database:
                     continue
 
                 self.insert_record('cities',
+                                   # по строке address будем производить поиск поэтому
+                                   # приводим её к нижнему регистру для удобства
                                    address=row[0].lower(),
                                    city=row[8] + ' ' + row[9],
                                    postal_code=row[1],
@@ -170,19 +172,6 @@ class Database:
                 ); 
               """
         self.execute(sql, commit=True)
-
-    def count_users(self, **kwargs):
-        sql = "SELECT COUNT(id) FROM users WHERE "
-        sql, params = self.format_args(sql, kwargs)
-        return self.execute(sql, params, fetchone=True)
-
-    def update_user(self, userid: int, **kwargs):
-        sql = "UPDATE users SET "
-        sql, params = self.format_args(sql, kwargs, ", ")
-        sql += " WHERE id = ?"
-        params += (userid,)
-        self.execute(sql, params, commit=True)
-        return sql, params
 
 
 def logger(statement):

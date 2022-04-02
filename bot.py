@@ -25,10 +25,10 @@ def register_all_filters(dp):
 
 
 def register_all_handlers(dp):
-    register_admin(dp)
     register_user(dp)
+    # register_admin(dp)
+    # register_echo(dp)
 
-    register_echo(dp)
 
 def create_tables(db: Database):
     db.create_table_cities()
