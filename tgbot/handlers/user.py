@@ -81,11 +81,17 @@ async def confirm_city(message: Message, state: FSMContext):
 async def give_result(message: Message, state: FSMContext):
     result = await state.get_data()
     result: dict = result.get('city')
+    # Получаем таймзону в формате UTC+N
     dbtz = result.get('timezone')
+    # Считаем смещение, для этого вычищаем из строки "UTC", т.е. остается +3 или -3
+    # TODO Проверить с отрицательными значениями
     offset = datetime.timedelta(hours=int(dbtz.replace('UTC', '')))
+    # Получаем таймзону
     tz = datetime.timezone(offset, dbtz)
+    # Получаем время соответвующее таймзоне
     current_time = datetime.datetime.now(tz)
-    local_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+    # Форматируем время
+    local_time = current_time.strftime("%d-%m-%Y %H:%M:%S")
     year = current_time.year
     timestamp = current_time.timestamp()
 
