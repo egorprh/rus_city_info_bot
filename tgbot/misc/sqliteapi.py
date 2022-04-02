@@ -146,7 +146,7 @@ class Database:
                     continue
 
                 self.insert_record('cities',
-                                   address=row[0],
+                                   address=row[0].lower(),
                                    city=row[8] + ' ' + row[9],
                                    postal_code=row[1],
                                    region=row[4] + ' ' + row[5],
