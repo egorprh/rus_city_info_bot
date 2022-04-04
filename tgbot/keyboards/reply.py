@@ -1,9 +1,15 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils import emoji
+
+give_info = emoji.emojize(':city_sunrise: Получить информацию о городе')
+yes = emoji.emojize(':white_check_mark: Да')
+no = emoji.emojize(':negative_squared_cross_mark: Нет')
+report_error = emoji.emojize(':shipit: Сообщить об ошибке')
 
 start_search_button = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text='Получить информацию о городе')
+            KeyboardButton(text=give_info)
         ]
     ],
     resize_keyboard=True,
@@ -13,8 +19,8 @@ start_search_button = ReplyKeyboardMarkup(
 yes_no_button = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text='Да'),
-            KeyboardButton(text='Нет')
+            KeyboardButton(text=yes),
+            KeyboardButton(text=no)
         ]
     ],
     resize_keyboard=True,
@@ -24,7 +30,7 @@ yes_no_button = ReplyKeyboardMarkup(
 support = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text='Сообщить об ошибке')
+            KeyboardButton(text=report_error)
         ]
     ],
     resize_keyboard=True
