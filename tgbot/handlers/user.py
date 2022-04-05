@@ -15,15 +15,20 @@ async def user_start(message: Message):
     user = message.from_user
 
     db: Database = message.bot.get("db")
-    db.insert_record('users', telegram_id=user.id, first_name=user.first_name, username=user.username,
-                     language_code=user.language_code)
 
-    await message.answer("Чтобы начать поиск нажми кнопку Получить информацию о городе",
-                         reply_markup=start_search_button)
+    if db.get_record('users', telegram_id=user.id):
+        await message.answer(emoji.emojize(":cop: Ты уже нажимал на Start, хитрец"), reply_markup=start_search_button)
+    else:
+        db.insert_record('users', telegram_id=user.id, first_name=user.first_name, username=user.username,
+                         language_code=user.language_code)
+
+        await message.answer(emoji.emojize(":arrow_down: Чтобы начать поиск - нажми кнопку "
+                                           "'Получить информацию о городе'"),
+                             reply_markup=start_search_button)
 
 
 async def start_search(message: Message):
-    await message.answer("Дай название города")
+    await message.answer(emoji.emojize(":pencil2: Введи название города о котором хочешь получить информацию"))
     await choseCityStates.give_city_name.set()
 
 
@@ -42,11 +47,12 @@ async def get_city_name(message: Message, state: FSMContext):
         results = db.get_records_sql("SELECT * FROM cities WHERE address LIKE ?", '%' + city_name)
         if len(results) > 1:
             await state.update_data(several_result=True)
-            await message.answer(f"Найдено {len(results)} совпадений")
+            await message.answer(emoji.emojize(f":satellite: Найдено {len(results)} населенных пунктов"))
 
     # Если городов нет, то сообщаем об этом
     if not results:
-        await message.answer('Ничего не найдено. Проверьте город на опечатки. Или введите близжайший крупный город',
+        await message.answer(emoji.emojize(':earth_asia: Я не нашел такого города. Введи полное название, '
+                                           'проверь на опечатки или введи ближайший крупный населенный пункт'),
                              reply_markup=start_search_button)
         await state.reset_state(True)
     else:
@@ -61,10 +67,12 @@ async def get_city_name(message: Message, state: FSMContext):
         if not results:
             state_data = await state.get_data()
             if state_data.get('several_result'):
-                await message.answer(":sweat_smile: Тогда остался только такой вариант:")
+                await message.answer(emoji.emojize(":sweat_smile: Тогда остался только такой вариант:"))
             await give_result(message, state)
         else:
-            await message.answer(f":smirk: Нашел несколько городов, есть такой: {city.get('city')} {city.get('region')}. :house: Это твой город?", reply_markup=yes_no_button)
+            await message.answer(emoji.emojize(f":smirk: Нашел несколько городов, есть такой: {city.get('city')}, "
+                                               f"{city.get('region')}. :house: Это твой город?"),
+                                 reply_markup=yes_no_button)
             await choseCityStates.confirm_city.set()
 
 
@@ -97,20 +105,18 @@ async def give_result(message: Message, state: FSMContext):
     year = current_time.year
     timestamp = current_time.timestamp()
 
-    await message.answer(f"""
-            {result.get('city')}, {result.get('region')}
-            Почтовый индекс: {result.get('postal_code')}
-            Округ: {result.get('district')}
-            Регион: {result.get('region')}
-            Часовой пояс: {result.get('timezone')}
-            Местное время: {local_time}
-            Timestamp: {timestamp}
-            Население (на 2021 год): {result.get('population')} 
-            Год основания: {result.get('foundation_year')}
-            Возраст города: {year - int(result.get('foundation_year'))}
-            Широта: {result.get('geo_lat')}
-            Долгота: {result.get('geo_lon')}
-            """, reply_markup=start_search_button)
+    await message.answer(emoji.emojize(f":white_check_mark: Нашел! {result.get('city')}, {result.get('region')}\n"
+                         f":postbox: Почтовый индекс: {result.get('postal_code')}\n"
+                         f":station: Округ: {result.get('district')}\n"
+                         f":sunrise_over_mountains: Регион: {result.get('region')}\n"
+                         f":earth_asia: Часовой пояс: {result.get('timezone')}\n"
+                         f":watch: Местное время: {local_time}\n"
+                         f":hourglass: Timestamp: {timestamp}\n"
+                         f":busts_in_silhouette: Население (на 2021 год): {result.get('population')}\n"
+                         f":triangular_flag_on_post: Год основания: {result.get('foundation_year')}\n"
+                         f":1234: Возраст города: {year - int(result.get('foundation_year'))}\n"
+                         f":round_pushpin: Широта: {result.get('geo_lat')}\n"
+                         f":round_pushpin: Долгота: {result.get('geo_lon')}"), reply_markup=start_search_button)
     await message.bot.send_location(message.chat.id, latitude=result.get('geo_lat'),
                                     longitude=result.get('geo_lon'))
 
@@ -119,8 +125,8 @@ async def give_result(message: Message, state: FSMContext):
 
 
 async def plug(message: Message):
-    await message.answer(':sweat_smile: Извини, кроме как выдавать информацию о городах России я больше ничего не умею. '
-                         'Если хочешь получить информацию о городе - жми кнопочку :point_down:',
+    await message.answer(emoji.emojize(':sweat_smile: Извини, кроме как выдавать информацию о городах России я больше ничего не умею. '
+                         'Если хочешь получить информацию о городе - жми кнопочку :point_down:'),
                          reply_markup=start_search_button)
 
 
