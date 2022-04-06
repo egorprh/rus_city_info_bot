@@ -30,7 +30,7 @@ titles = {
 
 
 class Database:
-    def __init__(self, path_to_db='main.db'):
+    def __init__(self, path_to_db='tgbot/misc/main.db'):
         self.path_to_db = path_to_db
 
     @property
@@ -52,12 +52,14 @@ class Database:
             data = cursor.fetchone()
             # Преобразуем объект sqlite3.Row в словарь
             dictone = {}
-            for key, item in enumerate(cursor.description):
-                dictone[item[0]] = data[key]
+            if data:
+                for key, item in enumerate(cursor.description):
+                    dictone[item[0]] = data[key]
             data = dictone
         if fetchall:
             # data = cursor.fetchall()
             # Преобразуем объекты sqlite3.Row в словари
+            # TODO Можем тут упасть, если cursor.fetchall() будет None
             data = [dict(row) for row in cursor.fetchall()]
 
         connection.close()
